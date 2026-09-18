@@ -1,0 +1,23 @@
+# Local credentials and machine-specific settings
+**/.env
+**/.env.*
+!**/.env.example
+
+# Python environments and generated files
+**/.venv/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+
+# Generated videos, audio, project data, and image cache
+ai_video_maker/projects/
+ai_video_maker/cache/
+ai_video_maker/tmp*/
+**/*.log
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

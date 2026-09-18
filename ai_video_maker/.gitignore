@@ -1,0 +1,9 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+projects/*
+!projects/.gitkeep
+cache/images/*
+!cache/images/README.txt
+tmp*/

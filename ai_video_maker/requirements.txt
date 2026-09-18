@@ -1,0 +1,5 @@
+Flask>=3.0,<4
+openai>=1.100.0
+python-dotenv>=1.0
+Pillow>=10.4
+imageio-ffmpeg>=0.6

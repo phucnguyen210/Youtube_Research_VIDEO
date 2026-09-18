@@ -1,0 +1,122 @@
+﻿<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Visual Storyteller V3</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">V3 â€¢ VISUAL STORYTELLER</div>
+        <h1>AI Visual Storyteller V3</h1>
+        <p>Research â†’ cháº¯t lá»c â†’ viáº¿t dá»… hiá»ƒu â†’ hook â†’ scene â†’ cáº£m xÃºc/cá»­ chá»‰ â†’ TTS â†’ subtitle ngáº¯n â†’ MP4.</p>
+      </div>
+      <div class="status-pill {{ 'ok' if api_configured else 'warn' }}">
+        {{ 'API key Ä‘Ã£ cáº¥u hÃ¬nh' if api_configured else 'ChÆ°a cÃ³ API key â€” Demo Mode' }}
+      </div>
+    </section>
+
+    <section class="card grid-two">
+      <div>
+        <label>Topic / keyword</label>
+        <textarea id="topic" rows="4">The PERFECT Daily Routine for Students</textarea>
+
+        <div class="row3">
+          <div><label>Thá»i lÆ°á»£ng</label><select id="duration"><option value="1">1 phÃºt</option><option value="3">3 phÃºt</option><option value="5">5 phÃºt</option><option value="10">10 phÃºt</option></select></div>
+          <div><label>FPS</label><select id="fps"><option value="24">24 FPS</option><option value="30" selected>30 FPS</option><option value="60">60 FPS</option></select></div>
+          <div><label>Scene ~</label><select id="sceneSeconds"><option value="4">4 giÃ¢y</option><option value="6" selected>6 giÃ¢y</option><option value="8">8 giÃ¢y</option></select></div>
+        </div>
+
+        <div class="row2">
+          <div><label>KhÃ¡n giáº£</label><select id="audience"><option value="general curious viewers">NgÆ°á»i xem phá»• thÃ´ng / tÃ² mÃ²</option><option value="students and young adults">Há»c sinh, sinh viÃªn</option><option value="beginner tech viewers">NgÆ°á»i má»›i vá» cÃ´ng nghá»‡</option></select></div>
+          <div><label>Má»©c giá»¯ chÃ¢n</label><select id="retention"><option value="high but credible" selected>Cao nhÆ°ng khÃ´ng giáº­t tÃ­t</option><option value="balanced educational">CÃ¢n báº±ng / giÃ¡o dá»¥c</option><option value="fast punchy short-form">Nhanh, punchy</option></select></div>
+        </div>
+
+        <label>Nguá»“n research</label>
+        <div class="checks">
+          <label><input type="checkbox" class="src" value="web" checked> Web</label>
+          <label><input type="checkbox" class="src" value="reddit" checked> Reddit</label>
+          <label><input type="checkbox" class="src" value="x"> X</label>
+          <label><input type="checkbox" class="src" value="news" checked> News</label>
+          <label><input type="checkbox" class="src" value="voz"> VOZ</label>
+        </div>
+
+        <div class="row2">
+          <div><label>Voice</label><select id="voice"><option value="marin">Marin</option><option value="cedar">Cedar</option><option value="alloy">Alloy</option><option value="nova">Nova</option><option value="onyx">Onyx</option></select></div>
+          <div class="demo-box"><label>Cháº¿ Ä‘á»™ test</label><label class="toggle-row"><input id="demo" type="checkbox" {% if default_demo %}checked{% endif %}> Demo Mode (khÃ´ng gá»i API)</label></div>
+        </div>
+
+        <label>Image Cost Mode</label>
+        <select id="imageCostMode"><option value="low_cost">Low Cost</option><option value="balanced" selected>Balanced</option><option value="high_quality">High Quality</option></select>
+        <label class="toggle-row"><input id="fullSceneMode" type="checkbox"> Tạo ảnh AI toàn cảnh cho toàn bộ video</label>
+        <p class="micro">Mỗi nhịp hình sẽ có một ảnh nhân vật trong bối cảnh. Video 3 phút có thể cần hàng chục ảnh tính phí. Hãy tắt Demo Mode để dùng chế độ này.</p>
+        <button id="generate">GENERATE V3 STORY VIDEO</button>
+        <p class="micro">V3 khÃ´ng chá»‰ â€œminh há»a cÃ¢u nÃ³iâ€. AI Ä‘Ã³ng vai <b>Ä‘áº¡o diá»…n hÃ¬nh áº£nh</b>: má»—i scene pháº£i cÃ³ má»¥c Ä‘Ã­ch ká»ƒ chuyá»‡n, focal object, hÃ nh Ä‘á»™ng nhÃ¢n váº­t, archetype hÃ¬nh áº£nh vÃ  bá»‘ cá»¥c khÃ¡c nhau.</p>
+      </div>
+
+      <div class="preview-card">
+        <img src="/static/character_preview.png" alt="Character" />
+        <div>
+          <strong>AI Visual Story Director</strong>
+          <p>NhÃ¢n váº­t chá»‰ xuáº¥t hiá»‡n khi cÃ³ vai trÃ²: pháº£n á»©ng, chá»‰ dáº«n, so sÃ¡nh hoáº·c trÃ¬nh bÃ y. Má»™t sá»‘ scene cá»‘ Ã½ bá» nhÃ¢n váº­t Ä‘á»ƒ váº­t thá»ƒ/cause-effect tá»± ká»ƒ chuyá»‡n.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card info-grid">
+      <div><strong>Story Blueprint</strong><span>AI táº¡o arc: hook â†’ reveal â†’ cause â†’ consequence â†’ takeaway trÆ°á»›c khi chia scene.</span></div>
+      <div><strong>Visual Archetypes</strong><span>Question reveal, cause/effect, comparison, process, detail, object-only, example vÃ  takeaway.</span></div>
+      <div><strong>Anti-template Guard</strong><span>V3 trÃ¡nh láº·p camera + vá»‹ trÃ­ + archetype liá»n nhau vÃ  buá»™c cÃ³ object-only beat khi nhÃ¢n váº­t xuáº¥t hiá»‡n quÃ¡ lÃ¢u.</span></div>
+    </section>
+
+    <section class="card" id="poseCard">
+      <div class="section-title"><h2>Character Pose Library</h2><button id="generatePoses" type="button">Generate Missing Poses</button></div>
+      <p id="poseJob" class="micro"></p>
+      <div id="poseList" class="pose-list"></div>
+    </section>
+
+    <section class="card" id="progressCard" hidden>
+      <div class="progress-head"><div><div class="eyebrow">PROJECT <span id="projectId"></span></div><h2 id="stageTitle">Äang chuáº©n bá»‹...</h2></div><div id="percent">0%</div></div>
+      <div class="bar"><div id="barInner"></div></div><p id="message"></p><div class="steps" id="steps"></div><div id="result" class="result"></div>
+    </section>
+
+    <section class="card" id="costCard" hidden><h2>Image Cost</h2><div id="costSummary"></div></section>
+
+    <section class="card" id="scriptCard" hidden>
+      <div class="section-title"><h2>Hook & Script</h2></div>
+      <div id="hook" class="hook-box"></div>
+      <p id="narrationPreview" class="script-preview"></p>
+    </section>
+
+    <section class="card" id="sceneCard" hidden>
+      <div class="section-title"><h2>Scene preview</h2><span id="sceneCount"></span></div>
+      <div id="scenes" class="scenes"></div>
+    </section>
+  </main>
+<script>
+const stages = ["research","audience","script","story","scenes","images","voice","render","completed"];
+const stageNames = {research:"Research",audience:"Audience Rewrite",script:"Retention Script",story:"Visual Story Director",scenes:"Storyboard",images:"Story Visuals",voice:"TTS + Timing",render:"Render",completed:"Completed",failed:"Failed",queued:"Queued"};
+const $=s=>document.querySelector(s); let timer=null;
+function drawSteps(current){const idx=stages.indexOf(current);$("#steps").innerHTML=stages.map((s,i)=>`<div class="step ${i<=idx?'active':''}">${stageNames[s]}</div>`).join("");}
+function esc(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function sceneHtml(s,p){const img=s.image_file?`/projects/${p}/${s.image_file}`:'';const chips=[s.visual_archetype,s.story_purpose,s.emotion,s.character_action,...(s.overlay_symbols||[])].filter(Boolean).map(x=>`<span class="chip">${esc(x)}</span>`).join('');return `<article class="scene">${img?`<img src="${img}" loading="lazy">`:`<div class="ph">Waiting...</div>`}<div class="scene-body"><div class="scene-top"><strong>Scene ${s.scene_id}</strong><span>${s.duration?Number(s.duration).toFixed(1)+'s':esc(s.camera)}</span></div><div class="chips">${chips}</div><p>${esc(s.narration)}</p><small><b>Purpose:</b> ${esc(s.story_purpose||'')} Â· <b>Focus:</b> ${esc(s.focus_object||'')}</small><small><b>Action:</b> ${esc(s.character_role||'')} / ${esc(s.character_action||'')} â†’ ${esc(s.interaction_target||'')}</small><small><b>Subtitle cue:</b> ${esc(s.subtitle_hint||'')}</small><small>${esc(s.visual_prompt||'')}</small></div></article>`;}
+function beatHtml(b,p){const img=b.image_file?`/projects/${p}/${b.image_file}`:'';return `<div class="beat-card">${img?`<img src="${img}" loading="lazy" alt="Beat ${esc(b.beat_id)}">`:`<div class="ph">Waiting...</div>`}<div><strong>Beat ${esc(b.beat_id)}</strong> <span class="strategy-badge ${b.image_strategy==='ai_image'?'ai':'local'}">${b.image_strategy==='ai_image'?'AI IMAGE':'LOCAL'}</span> <span>${Number(b.duration||b.duration_target||0).toFixed(1)}s</span><p>${esc(b.narration)}</p><small><b>Purpose:</b> ${esc(b.story_purpose)} Â· <b>Archetype:</b> ${esc(b.visual_archetype)}</small><small><b>Character:</b> ${b.character_visible?'visible':'hidden'} Â· <b>Pose:</b> ${esc(b.character_pose||'idle')} Â· ${esc(b.character_emotion)} / ${esc(b.character_action)}</small><small><b>Focus:</b> ${esc(b.focus_object)} (${esc(b.focus_side)}) Â· <b>Camera:</b> ${esc(b.camera)}</small></div></div>`;}
+function beatDiagnostics(b){return `<div class="beat-diagnostics"><small><b>Mode:</b> ${esc(b.scene_mode)} · <b>Strategy:</b> ${esc(b.image_strategy)} · <b>Concept:</b> ${esc(b.visual_concept)}</small><small><b>Semantic:</b> ${esc(b.semantic_subject)} · <b>Core claim:</b> ${esc(b.core_claim)}</small><small><b>Visual message:</b> ${esc(b.visual_message)} · <b>Assets:</b> ${esc((b.visual_objects||[]).map(o=>o.type).join(' + '))}</small><small><b>Action:</b> ${esc(b.character_action_description||b.character_action)} · <b>Emotion:</b> ${esc(b.emotion_description||b.character_emotion)} · <b>Environment:</b> ${esc(b.environment)}</small><small><b>Continuity:</b> ${esc(b.continuity_group||'standalone')} · <b>Match:</b> ${Number(b.asset_match_confidence||0).toFixed(2)} · <b>Novelty:</b> ${Number(b.visual_novelty_score||0).toFixed(2)} · <b>Quality:</b> ${Number(b.visual_quality_score||0).toFixed(2)}</small>${b.semantic_mismatch?`<small><b>Repaired:</b> ${esc(b.semantic_mismatch)}</small>`:''}${b.visual_quality_warning?`<small><b>Review:</b> ${esc(b.visual_quality_warning)}</small>`:''}</div>`;}
+function beatPreviewHtml(b,p){let html=beatHtml(b,p);if(b.image_strategy==='full_scene_ai')html=html.replace('strategy-badge local','strategy-badge ai').replace('>LOCAL</span>','>FULL SCENE AI</span>');else if(b.image_strategy==='character_composite')html=html.replace('>LOCAL</span>','>CHARACTER + LOCAL</span>');return html;}
+function sceneBeatsHtml(s,p){const beats=s.visual_beats&&s.visual_beats.length?s.visual_beats:[{...s,beat_id:`${s.scene_id}a`,character_emotion:s.emotion,duration_target:s.duration}];return `<article class="scene"><div class="scene-body"><div class="scene-top"><strong>Scene ${esc(s.scene_id)}</strong><span>${s.duration?Number(s.duration).toFixed(1)+'s':''}</span></div><p>${esc(s.narration)}</p><div class="beat-list">${beats.map(b=>beatPreviewHtml(b,p)+beatDiagnostics(b)).join('')}</div></div></article>`;}
+async function poll(id){const r=await fetch(`/api/projects/${id}`);const d=await r.json();$("#stageTitle").textContent=stageNames[d.status]||d.status;$("#percent").textContent=`${d.progress||0}%`;$("#barInner").style.width=`${d.progress||0}%`;$("#message").textContent=d.error?`${d.message} ${d.error}`:d.message;drawSteps(d.status);
+ if(d.image_plan&&d.image_plan.length){$("#costCard").hidden=false;$("#costSummary").textContent=`AI images planned: ${d.planned_ai_images||0} · AI images used: ${d.ai_image_calls||0} · Local beats: ${d.local_scenes||0} · Cache hits: ${d.image_cache_hits||0} · Estimated image cost: $${Number(d.estimated_image_cost||0).toFixed(3)}`;}
+ if(d.script){$("#scriptCard").hidden=false;$("#hook").textContent=d.script.hook||'';$("#narrationPreview").textContent=d.script.narration||'';}
+ if(d.scenes&&d.scenes.length){$("#sceneCard").hidden=false;$("#sceneCount").textContent=`${d.scenes.length} scene`;$("#scenes").innerHTML=d.scenes.map(s=>sceneBeatsHtml(s,id)).join('');}
+ if(d.status==='completed'){clearInterval(timer);$("#result").innerHTML=`<a class="download primary" href="/projects/${id}/output.mp4">Táº£i MP4</a><a class="download" href="/projects/${id}/subtitles.srt">SRT V3</a><a class="download" href="/projects/${id}/research.json">Research</a><a class="download" href="/projects/${id}/audience_brief.json">Audience Brief</a><a class="download" href="/projects/${id}/script.json">Script</a><a class="download" href="/projects/${id}/story_blueprint.json">Story Blueprint</a><a class="download" href="/projects/${id}/scenes.json">Storyboard</a><a class="download" href="/projects/${id}/image_plan.json">Image Plan</a>`;$("#generate").disabled=false;}
+ if(d.status==='failed'){clearInterval(timer);$("#result").innerHTML=`<a class="download" href="/projects/${id}/error.log">error.log</a>`;$("#generate").disabled=false;}}
+$("#generate").addEventListener("click",async()=>{$("#generate").disabled=true;$("#progressCard").hidden=false;$("#sceneCard").hidden=true;$("#scriptCard").hidden=true;$("#result").innerHTML='';const payload={topic:$("#topic").value,duration_minutes:+$("#duration").value,fps:+$("#fps").value,preferred_scene_seconds:+$("#sceneSeconds").value,voice:$("#voice").value,audience:$("#audience").value,retention_level:$("#retention").value,sources:[...document.querySelectorAll('.src:checked')].map(x=>x.value),demo_mode:$("#demo").checked,image_cost_mode:$("#imageCostMode").value,full_scene_mode:$("#fullSceneMode").checked};const r=await fetch('/api/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok){alert(d.error||'Create failed');$("#generate").disabled=false;return;}$("#projectId").textContent=d.project_id;await poll(d.project_id);timer=setInterval(()=>poll(d.project_id),2200);});
+async function loadPoses(){const r=await fetch('/api/poses');const d=await r.json();$("#poseJob").textContent=d.job.message||'';$("#generatePoses").disabled=d.job.status==='running'||!d.api_configured;$("#poseList").innerHTML=d.poses.map(p=>`<div class="pose-item"><strong>${p.exists?'âœ“':'âœ•'} ${esc(p.name)}</strong>${p.exists?`<img src="/assets/character/poses/${encodeURIComponent(p.name)}.png?v=${encodeURIComponent(d.job.message||p.name)}" alt="${esc(p.name)} pose">`:''}<button type="button" data-pose="${esc(p.name)}" data-overwrite="${p.exists?'1':'0'}" ${d.job.status==='running'||!d.api_configured?'disabled':''}>${p.exists?'Regenerate Pose':'Generate Pose'}</button></div>`).join('');}
+async function generatePose(name=null,overwrite=false){const r=await fetch('/api/poses/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,overwrite})});const d=await r.json();if(!r.ok)$("#poseJob").textContent=d.error||'Generation failed';else await loadPoses();}
+$("#generatePoses").addEventListener('click',()=>generatePose());$("#poseList").addEventListener('click',e=>{const b=e.target.closest('button[data-pose]');if(b)generatePose(b.dataset.pose,b.dataset.overwrite==='1')});loadPoses();setInterval(loadPoses,5000);
+</script>
+</body>
+</html>
