@@ -7,6 +7,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from .config import VIDEO_W, VIDEO_H
+from .outro import normalize_outro, plan_outro_scene as build_outro_scene, render_local_outro
 
 
 class MockService:
@@ -62,7 +63,22 @@ class MockService:
         if chosen[-1] != sentences[-1]:
             chosen.append(sentences[-1])
         narration = " ".join(chosen)
-        return {"title": topic, "hook": "The perfect routine is probably simpler than you think.", "narration": narration, "takeaway": "Make the useful choice easier to repeat."}
+        takeaway = "Make the useful choice easier to repeat."
+        outro = normalize_outro({"subtitle_text": "Like and subscribe for more"}, topic, takeaway)
+        return {"title": topic, "hook": "The perfect routine is probably simpler than you think.",
+                "narration": narration, "takeaway": takeaway, "outro": outro}
+
+    def generate_outro_brief(self, topic, script, preferred_style=None, fixed=False):
+        return normalize_outro(script.get("outro"), topic, script.get("takeaway", ""), preferred_style, fixed)
+
+    def plan_outro_scene(self, outro_brief):
+        return build_outro_scene(outro_brief)
+
+    def tts_outro(self, outro_text, output_path, voice=None):
+        self.tts(outro_text, output_path, voice=voice)
+
+    def generate_outro_image(self, visual_prompt, output_path, quality=None):
+        render_local_outro(normalize_outro({}, "demo"), output_path)
 
     def story_blueprint(self, topic, research, audience_brief, script, duration_minutes):
         return {

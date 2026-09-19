@@ -1,5 +1,15 @@
 # AI Visual Storyteller V3.1
 
+## Dynamic outro
+
+The script response now includes a separate `outro` object with `cta_angle`, `spoken_text`, `subtitle_text`, `visual_style`, `duration_sec`, and `template`. The narration keeps its normal takeaway; the CTA is recorded separately and appended after the main scenes. New projects write `outro_script.json`, `outro_plan.json`, `outro_scene.png`, `outro_audio.wav`, and `outro.mp4`. The final `output.mp4` and `subtitles.srt` include the outro.
+
+The home page offers a dynamic or fixed outro layout and four styles: `creator_desk_mic`, `monitor_play_button`, `whiteboard_presenter`, and `cozy_creator_room`. Local character artwork is the default and does not use an image API call. Selecting AI artwork uses the existing character reference and image cache and may incur one additional image charge. Turn off **Thêm outro ngắn ở cuối video** to keep the previous output behavior. `DEFAULT_OUTRO_STYLE` in `.env` sets the fallback style.
+
+Local outro mode uses the three supplied reference PNGs in `assets/outro/` directly: `see_you_studio.png` for creator desk and cozy room, `thanks_workspace.png` for monitor workspace, and `whiteboard_like_subscribe.png` for the board layout. The original PNG bytes are copied into each project without an image API call. The outro spoken line stays close to three short CTA patterns for general videos, habit/psychology videos, and explainers; the selected project voice records it as `outro_audio.wav`. Demo Mode uses silent mock audio.
+
+Run `.venv\Scripts\python.exe test_outro.py` for offline script, brief, prompt, TTS, image-provider stub, and outro MP4 checks.
+
 ## Hybrid Image Engine
 
 ### Semantic visual planning

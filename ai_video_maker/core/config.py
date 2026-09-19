@@ -26,6 +26,7 @@ TTS_MODEL = os.getenv("OPENAI_TTS_MODEL", "gpt-4o-mini-tts").strip()
 TTS_VOICE = os.getenv("OPENAI_TTS_VOICE", "marin").strip()
 DEMO_MODE = os.getenv("DEMO_MODE", "0").strip() == "1"
 MAX_SCENES = int(os.getenv("MAX_SCENES", "60"))
+DEFAULT_OUTRO_STYLE = os.getenv("DEFAULT_OUTRO_STYLE", "creator_desk_mic").strip()
 
 VIDEO_W = 1920
 VIDEO_H = 1080

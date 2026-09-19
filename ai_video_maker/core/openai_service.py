@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Iterable
@@ -11,12 +11,13 @@ from .config import (
 )
 from .utils import extract_json
 from .image_provider import OpenAIImageProvider
+from .outro import normalize_outro, plan_outro_scene as build_outro_scene
 
 
 class OpenAIService:
     def __init__(self):
         if not OPENAI_API_KEY:
-            raise RuntimeError("OPENAI_API_KEY chưa được cấu hình trong file .env")
+            raise RuntimeError("OPENAI_API_KEY chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh trong file .env")
         self.client = OpenAI(api_key=OPENAI_API_KEY)
         self.image_provider = OpenAIImageProvider(self.client)
 
@@ -183,7 +184,7 @@ Return ONLY JSON:
 {{
   "viewer_question": "...",
   "viewer_mirror_moments": [
-    {"scene":"specific behavior the viewer may recognize","hidden_tension":"what makes it interesting","bridge_to_topic":"how it naturally leads into the subject"}
+    {{"scene":"specific behavior the viewer may recognize","hidden_tension":"what makes it interesting","bridge_to_topic":"how it naturally leads into the subject"}}
   ],
   "recognition_hook_options": ["behavior-first hook", "behavior-first hook", "behavior-first hook"],
   "hook_options": ["...", "...", "..."],
@@ -268,6 +269,8 @@ Additional rules:
 - No citations spoken aloud and no markdown headings inside narration.
 - Size the conclusion according to the duration-specific strategy; do not rush a long-form synthesis or overextend a short ending.
 - End with a useful takeaway, not a generic like/subscribe/share call to action.
+- Keep the CTA out of narration. Write it only in the separate outro object.
+- Keep the outro spoken_text close to one of these short natural lines, selecting the tone that fits the topic: "If this video helped, leave a like and subscribe for more." / "If this helped you see the pattern, like and subscribe for more." / "If this breakdown was useful, subscribe for more simple explainers."
 - Stay close to {target_words} words (within about 10%) so the finished narration matches the requested duration.
 - Use only facts grounded in the research JSON.
 {routine_scenarios}
@@ -276,13 +279,20 @@ Return ONLY JSON:
 {{
   "title": "...",
   "hook": "...",
-  "opening_arc": {
+  "opening_arc": {{
     "mirror_moments": ["exact or near-exact opening behavior moments used in narration"],
     "pattern_interrupt": "the line that reframes those moments",
     "payoff_promise": "what the viewer will understand/get by staying"
-  },
+  }},
   "narration": "...",
-  "takeaway": "..."
+  "takeaway": "...",
+  "outro": {{
+    "cta_angle": "brief benefit of future videos, matched to this topic",
+    "spoken_text": "one short friendly sentence, about 10-18 words, inviting a like and/or subscription",
+    "subtitle_text": "short CTA subtitle",
+    "visual_style": "creator_desk_mic|monitor_play_button|whiteboard_presenter|cozy_creator_room",
+    "duration_sec": 5
+  }}
 }}
 """.strip()
         response = self.client.responses.create(
@@ -290,7 +300,35 @@ Return ONLY JSON:
             input=prompt,
             max_output_tokens=max_output_tokens,
         )
-        return extract_json(response.output_text)
+        script = extract_json(response.output_text)
+        script["outro"] = normalize_outro(script.get("outro"), topic, script.get("takeaway", ""))
+        return script
+
+    def generate_outro_brief(self, topic: str, script: dict,
+                             preferred_style: str | None = None, fixed: bool = False) -> dict:
+        """Reuse the script's CTA; ask the model only for older scripts lacking one."""
+        raw = script.get("outro")
+        if not isinstance(raw, dict) or not raw.get("spoken_text"):
+            prompt = ("Write one short, warm English YouTube outro CTA based on this video's topic and takeaway. "
+                      "Use wording close to: 'If this video helped, leave a like and subscribe for more.' "
+                      "or 'If this helped you see the pattern, like and subscribe for more.' "
+                      "or 'If this breakdown was useful, subscribe for more simple explainers.' "
+                      "Return ONLY JSON with cta_angle, spoken_text (10-18 words, one sentence), "
+                      "subtitle_text, visual_style, and duration_sec (4-8). Do not repeat the takeaway "
+                      "or add factual claims. Topic: " + topic + "\nTakeaway: " + str(script.get("takeaway", "")))
+            response = self.client.responses.create(model=TEXT_MODEL, input=prompt)
+            raw = extract_json(response.output_text)
+        return normalize_outro(raw, topic, script.get("takeaway", ""), preferred_style, fixed)
+
+    def plan_outro_scene(self, outro_brief: dict) -> dict:
+        return build_outro_scene(outro_brief)
+
+    def tts_outro(self, outro_text: str, output_path: Path, voice: str | None = None) -> None:
+        self.tts(outro_text, output_path, voice=voice)
+
+    def generate_outro_image(self, visual_prompt: str, output_path: Path,
+                             quality: str | None = None) -> None:
+        self.generate_full_scene(visual_prompt, output_path, quality=quality)
 
     def story_blueprint(self, topic: str, research: dict, audience_brief: dict, script: dict,
                         duration_minutes: int) -> dict:
@@ -338,7 +376,7 @@ Return ONLY JSON:
   "story_promise": "what the viewer will understand by the end",
   "opening_tension": "what feels unresolved at the start",
   "viewer_mirror_sequence": [
-    {"behavior":"recognizable micro-behavior from the opening","visual_scene":"how to show it as a lived moment","transition":"how it leads to the next beat"}
+    {{"behavior":"recognizable micro-behavior from the opening","visual_scene":"how to show it as a lived moment","transition":"how it leads to the next beat"}}
   ],
   "visual_motif": "one recurring visual motif that can connect the video without dominating it",
   "continuity_anchors": ["2-4 objects/visual ideas that may reappear intentionally"],
@@ -435,7 +473,7 @@ Return ONLY a JSON array:
         response = self.client.responses.create(model=TEXT_MODEL, input=prompt)
         scenes = extract_json(response.output_text)
         if not isinstance(scenes, list):
-            raise RuntimeError("Scene planner không trả về một mảng JSON.")
+            raise RuntimeError("Scene planner khÃ´ng tráº£ vá» má»™t máº£ng JSON.")
         return scenes[:max_scenes]
 
     def generate_background(self, scene_prompt: str, output_path: Path,
@@ -483,3 +521,4 @@ Composition requirements:
             response_format="wav",
         ) as response:
             response.stream_to_file(output_path)
+

@@ -9,6 +9,7 @@ from core.pipeline import make_project, project_detail, run_project
 from core.character_pose_selector import POSE_NAMES, pose_status
 from core.character_pose_generator import generate_pose, generate_missing
 from core.config import ASSETS_DIR
+from core.outro import REFERENCE_OUTROS
 
 app = Flask(__name__)
 executor = ThreadPoolExecutor(max_workers=2)
@@ -85,5 +86,12 @@ def pose_image(name):
     if name not in POSE_NAMES:
         return jsonify({"error":"Unknown pose"}),404
     return send_from_directory(ASSETS_DIR/"character"/"poses",f"{name}.png")
+
+@app.get("/assets/outro/<name>.png")
+def outro_reference_image(name):
+    filename=f"{name}.png"
+    if filename not in set(REFERENCE_OUTROS.values()):
+        return jsonify({"error":"Unknown outro image"}),404
+    return send_from_directory(ASSETS_DIR/"outro",filename)
 
 if __name__=="__main__": app.run(host="127.0.0.1",port=5000,debug=False,threaded=True)

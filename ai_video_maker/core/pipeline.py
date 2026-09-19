@@ -1,17 +1,21 @@
 from __future__ import annotations
 import traceback
+import hashlib
 from pathlib import Path
 from threading import Lock
 from uuid import uuid4
 from PIL import Image, ImageOps
 
-from .config import PROJECTS_DIR, DEMO_MODE, MAX_SCENES, OPENAI_API_KEY
+from .config import (PROJECTS_DIR, DEMO_MODE, MAX_SCENES, OPENAI_API_KEY,
+                     CACHE_IMAGES_DIR, IMAGE_MODEL, IMAGE_COST_ESTIMATE, CHARACTER_PATH)
 from .mock_service import MockService
 from .render import composite_scene, render_scene, concat_scenes, write_srt
 from .utils import ensure_dir, read_json, write_json, media_duration
 from .visual_beats import plan_visual_beats, guard_beats
 from .overlays import normalize_overlays
 from .hybrid_image_engine import HybridImageEngine, prepare_image_plan
+from .image_cache import get_or_generate
+from .outro import STYLES, outro_asset_path, render_local_outro
 
 LOCK = Lock()
 
@@ -34,6 +38,10 @@ def make_project(payload: dict) -> tuple[str, Path]:
         "story_mode": payload.get("story_mode", "dynamic educational storyteller"),
         "demo_mode": bool(payload.get("demo_mode", DEMO_MODE or not OPENAI_API_KEY)),
         "full_scene_mode": payload.get("full_scene_mode") is True,
+        "outro_enabled": payload.get("outro_enabled", True) is not False,
+        "outro_mode": payload.get("outro_mode") if payload.get("outro_mode") in {"dynamic", "fixed"} else "dynamic",
+        "outro_style": payload.get("outro_style") if payload.get("outro_style") in STYLES else None,
+        "outro_image_mode": payload.get("outro_image_mode") if payload.get("outro_image_mode") in {"local", "ai"} else "local",
         "image_cost_mode": payload.get("image_cost_mode") if payload.get("image_cost_mode") in {"low_cost","balanced","high_quality"} else "balanced",
         "ai_image_calls":0, "local_scenes":0, "image_cache_hits":0, "estimated_image_cost":0.0,
         "status": "queued", "progress": 0, "message": "Đã tạo project V3", "error": None, "scene_count": 0,
@@ -127,6 +135,16 @@ def run_project(project_id: str):
 
         update_state(root,status="script",progress=18,message="Retention Script: viết narration ngắn, dễ hiểu, có nhịp reveal...")
         script=service.write_script(topic,research,brief,duration_minutes,audience,retention_level); write_json(root/"script.json",script)
+        outro_brief = None
+        outro_plan = None
+        if state.get("outro_enabled", True):
+            outro_brief = service.generate_outro_brief(
+                topic, script, state.get("outro_style"), state.get("outro_mode")=="fixed")
+            outro_plan = service.plan_outro_scene(outro_brief)
+            script["outro"] = outro_brief
+            write_json(root/"script.json",script)
+            write_json(root/"outro_script.json",outro_brief)
+            write_json(root/"outro_plan.json",outro_plan)
 
         update_state(root,status="story",progress=25,message="Visual Story Director: thiết kế arc, motif, vai trò nhân vật và nhịp hình ảnh...")
         blueprint=service.story_blueprint(topic,research,brief,script,duration_minutes); write_json(root/"story_blueprint.json",blueprint)
@@ -190,13 +208,61 @@ def run_project(project_id: str):
 
         write_json(root/"visual_beats.json",[b for s in scenes for b in s["visual_beats"]])
         write_json(root/"motion_plan.json",[{"beat_id":b["beat_id"],"camera":b["camera"],"strength":b["camera_strength"],"focus_side":b["focus_side"],"duration":b["duration"]} for s in scenes for b in s["visual_beats"]])
-        write_srt(scenes,root/"subtitles.srt")
+        outro_subtitle_scene = None
+        if outro_brief:
+            update_state(root,status="voice",progress=76,message="Tạo lời thoại và hình outro...")
+            outro_audio = root/"outro_audio.wav"
+            if not outro_audio.exists():
+                service.tts_outro(outro_brief["spoken_text"],outro_audio,voice=voice)
+            outro_duration = media_duration(outro_audio)
+            if not 0 < outro_duration <= 20:
+                raise RuntimeError(f"Outro audio duration invalid: {outro_duration:.1f}s")
+            outro_brief["actual_duration_sec"] = round(outro_duration,3)
+            outro_image = root/"outro_scene.png"
+            if not outro_image.exists():
+                if state.get("outro_image_mode")=="ai" and not state["demo_mode"]:
+                    try:
+                        ref_id = hashlib.sha256(CHARACTER_PATH.read_bytes()).hexdigest()[:16]
+                        def create_outro(path):
+                            service.generate_outro_image(outro_plan["visual_prompt"],path,quality=image_engine.quality)
+                        called = get_or_generate(CACHE_IMAGES_DIR,outro_image,outro_plan["visual_prompt"],
+                                                 IMAGE_MODEL,image_engine.quality,"1536x1024",f"outro-{ref_id}",create_outro)
+                        image_engine.ai_image_calls += int(called)
+                        image_engine.cache_hits += int(not called)
+                        if called:
+                            image_engine.estimated_image_cost += IMAGE_COST_ESTIMATE.get(image_engine.quality,0)
+                        outro_plan["image_strategy"] = "full_scene_ai"
+                        outro_plan["cache_hit"] = not called
+                        with Image.open(outro_image) as rendered:
+                            ImageOps.fit(rendered.convert("RGB"),(1920,1080),
+                                         method=Image.Resampling.LANCZOS).save(outro_image)
+                    except Exception as exc:
+                        render_local_outro(outro_brief,outro_image)
+                        outro_plan["image_strategy"] = "local_fallback"
+                        outro_plan["image_error"] = f"{type(exc).__name__}: {exc}"[:200]
+                else:
+                    render_local_outro(outro_brief,outro_image)
+                    outro_plan["image_strategy"] = "reference_asset" if outro_asset_path(outro_brief["visual_style"]) else "local_character_template"
+            else:
+                outro_plan["image_strategy"] = "existing_asset"
+            outro_plan["image_file"] = "outro_scene.png"
+            outro_plan["audio_file"] = "outro_audio.wav"
+            outro_subtitle_scene = {"narration": outro_brief["spoken_text"],"duration":outro_duration}
+            write_json(root/"outro_script.json",outro_brief)
+            write_json(root/"outro_plan.json",outro_plan)
+            update_state(root,**image_engine.summary())
+        write_srt([*scenes,*([outro_subtitle_scene] if outro_subtitle_scene else [])],root/"subtitles.srt")
         clips=[]
         for i,scene in enumerate(scenes,1):
             progress=76+int(21*i/len(scenes)); update_state(root,status="render",progress=progress,message=f"Render scene {i}/{len(scenes)}...")
             clip_path=root/"clips"/f"scene_{i:03d}.mp4"
             render_scene([root/b["image_file"] for b in scene["visual_beats"]],root/scene["audio_file"],clip_path,scene["duration"],fps,scene.get("camera","zoom_in"),beats=scene["visual_beats"])
             clips.append(clip_path)
+        if outro_brief:
+            outro_clip = root/"outro.mp4"
+            render_scene([root/"outro_scene.png"],root/"outro_audio.wav",outro_clip,
+                         outro_subtitle_scene["duration"],fps,"static")
+            clips.append(outro_clip)
         update_state(root,status="render",progress=98,message="Đang ghép video cuối..."); concat_scenes(clips,root/"output.mp4",fps)
         update_state(root,status="completed",progress=100,message="Hoàn tất V3 Visual Storyteller.",output_file="output.mp4",subtitle_file="subtitles.srt")
     except Exception as exc:
@@ -212,4 +278,6 @@ def project_detail(project_id: str):
     state["story_blueprint"]=read_json(root/"story_blueprint.json")
     state["scenes"]=read_json(root/"scenes.json",[])
     state["image_plan"]=read_json(root/"image_plan.json",[])
+    state["outro_script"]=read_json(root/"outro_script.json")
+    state["outro_plan"]=read_json(root/"outro_plan.json")
     return state
